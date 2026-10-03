@@ -3,6 +3,17 @@
 --  Skema MySQL 8.0 untuk tabel fitur.
 --  Database: cava   |   Charset: utf8mb4 / utf8mb4_unicode_ci
 -- ============================================================
+--  STATUS: SUDAH DIUJI, BUKAN DRAF
+--  Diuji 2 Okt 2026 pada MySQL 8.0.30 di database sekali pakai
+--  (`cava_schema_test`, dihapus lagi setelah pengujian). Hasil:
+--    - 10 tabel terbentuk tanpa error
+--    - 13 foreign key terpasang
+--    - 10 kunci unik (di luar primary key) terpasang
+--    - duplikat slot ditolak database: ERROR 1062
+--    - dua akun dengan `google_id` NULL diterima, `google_id` sama ditolak
+--    - setelah baris slot dihapus, slot yang sama bisa dipesan lagi
+--    - menghapus janji ikut menghapus baris slot dan riwayatnya (cascade)
+-- ============================================================
 --  Cara pakai:
 --   1. Database kosong  -> jalankan Bagian 1, lalu Bagian 2.
 --   2. `users` sudah ada (kamu sudah `php artisan migrate`)

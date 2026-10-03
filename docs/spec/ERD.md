@@ -3,6 +3,9 @@
 Diagram di bawah memakai **Mermaid**, jadi GitHub merendernya otomatis saat kamu
 membuka file ini di browser. Tidak perlu aplikasi tambahan.
 
+Rancangan ini berisi **10 tabel** dan **sudah diuji** di MySQL 8.0.30 — DDL-nya ada
+di `schema.sql`, lengkap dengan hasil pengujiannya di bagian atas file itu.
+
 Versi ringkas dalam teks ada di bagian bawah, untuk dibaca dari editor biasa.
 
 ## Diagram
