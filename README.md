@@ -1,58 +1,103 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# CAVA — Clinic Appointment Voice Assistant
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplikasi janji temu klinik untuk tugas kelompok (PBL) Pemrograman Web Lanjut di
+Politani. Pasien bisa membuat janji lewat **web**, **chat AI**, atau **suara**;
+petugas mengelola janji di back office; dokter mengisi rekam medis hasil
+pemeriksaan.
 
-## About Laravel
+Dibangun dengan **Laravel 13** dan **MySQL**.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+> **Status saat ini: tahap desain.** Yang ada di repo ini baru dokumen dan kerangka
+> Laravel. Belum ada satu pun fitur yang dikoding. Itu disengaja — prototipe
+> versi sebelumnya dibangun terburu-buru tanpa spec, dan hasilnya harus dirombak.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Urutan membaca (penting)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Baca berurutan. Setiap dokumen mengandaikan dokumen sebelumnya sudah dibaca.
 
-## Learning Laravel
+1. **`SPEC-MAP.md`** — peta modul, urutan build, dan aturan arsitektur yang
+   mengikat semua modul. Mulai dari sini.
+2. **`docs/spec/ERD.md`** — struktur data dan relasinya. Diagramnya digambar
+   otomatis oleh GitHub saat file ini dibuka di browser.
+3. **`docs/spec/ALUR-PENGGUNA.md`** — perjalanan pemakai dari mendaftar sampai
+   selesai: alur pasien, pasien tanpa akun, petugas, dan dokter.
+4. **Spec per modul** — baca sesuai bagian yang kamu pegang:
+   - `docs/spec/SPEC-dokter.md` — dokter, jadwal praktik, tanggal libur
+   - `docs/spec/SPEC-pasien.md` — biodata, akun, nomor rekam medis
+   - `docs/spec/SPEC-janji.md` — buat janji, ubah jadwal, batalkan, riwayat
+   - `docs/spec/SPEC-qr.md` — QR bukti janji dan halaman scan petugas
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Aturan kerja tim
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+1. **Spec dulu, baru kode.** Kalau ada yang berubah, ubah dokumennya dulu di
+   commit terpisah, baru kodingnya. Ini yang membedakan versi ini dari yang lama.
+2. **Satu fitur, satu commit.** Pesan commit berbahasa Indonesia, menjelaskan apa
+   yang berubah — bukan "update" atau "fix".
+3. **Jangan pernah commit `.env`** atau kredensial apa pun. Repo ini publik.
+   Kunci API dan password diisi sendiri di `.env` masing-masing.
+4. **Menambah paket/library harus disetujui dulu** oleh seluruh kelompok, bukan
+   satu orang diam-diam.
+5. **Klaim harus dibuktikan.** Setelah menambah fitur, tunjukkan hasil nyatanya:
+   HTTP status, potongan output, atau baris dari database.
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+## Cara menjalankan
 
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+Butuh **Laragon** (sudah berisi PHP 8.3 dan MySQL 8) di Windows.
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer install
+cp .env.example .env          # Windows: copy .env.example .env
+php artisan key:generate
+php artisan migrate           # butuh database `cava` sudah dibuat di MySQL
+php artisan serve
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Buka `http://localhost:8000`.
 
-## Contributing
+Database yang dipakai bernama **`cava`**. Buat dulu di MySQL kalau belum ada.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Yang sudah diputuskan (jangan diusulkan ulang)
 
-## Code of Conduct
+- Nama **CAVA**; MySQL, bukan SQLite; Laravel 13.
+- **Rebuild dari nol** dengan history git bersih.
+- Auth: **Google** sebagai jalur utama, **email+password** sebagai cadangan.
+  Pasien punya akun; petugas dan dokter memakai email+password.
+- **Satu akun boleh menaungi banyak biodata** (pola Kartu Keluarga), lewat tabel
+  penghubung `pasien_akun`.
+- Jenis kelamin dan tanggal lahir tidak diturunkan dari NIK — **NIK tidak
+  disimpan**.
+- **QR berisi kode acak 8 karakter**, bukan id.
+- Nomor rekam medis berformat **`RM-000123`**, terbit saat data wajib pasien
+  lengkap pada kunjungan pertama, dan tidak pernah berubah.
+- Pasien boleh membatalkan atau mengubah jadwal **sampai H-1**.
+- Petugas wajib menandai `dikonfirmasi` sebelum janji bisa ditandai `hadir`.
+- Rekam medis disimpan di tabel sendiri dan **tidak pernah ikut export CSV**.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Pertanyaan terbuka — butuh keputusan kelompok
 
-## Security Vulnerabilities
+1. **Durasi satu slot janji** berapa menit? (nilainya sudah jadi kolom di jadwal,
+   jadi tinggal diisi; default 30)
+2. **Pembagian tugas per modul** — belum ada. Urutan build ada di `SPEC-MAP.md`.
+3. **Pengingat otomatis sebelum jadwal?** Kalau ya, lewat email — satu-satunya
+   jalur yang tersedia. Kalau tidak, fitur ini dihapus dari rencana.
+4. **Pengiriman email untuk registrasi dan lupa password:** pakai `MAIL_MAILER=log`
+   (berfungsi tanpa internet, cocok untuk demo), Mailtrap, atau Gmail SMTP?
+5. **Petugas perlu memindahkan banyak janji sekaligus** kalau dokter berhalangan?
+6. **Jadwal dokter diubah lewat UI panel atau cukup lewat seeder** untuk keperluan
+   demo?
+7. **Desain kartu pasien** — ukuran, isi, dan siapa yang mencetak.
+8. **Format QR dicetak di kertas bukti janji?** Kalau ya, ukuran cetaknya berapa.
+9. **Paket `laravel/socialite`** untuk login Google belum diinstall — masih
+   menunggu persetujuan setelah alur disetujui.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Struktur folder dokumen
 
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```
+SPEC-MAP.md              peta modul + urutan build
+docs/spec/ERD.md         struktur data (diagram Mermaid, tampil di GitHub)
+docs/spec/ALUR-PENGGUNA.md   alur semua aktor
+docs/spec/SPEC-dokter.md     modul dokter
+docs/spec/SPEC-pasien.md     modul pasien
+docs/spec/SPEC-janji.md      modul janji temu
+docs/spec/SPEC-qr.md         modul QR
+```
