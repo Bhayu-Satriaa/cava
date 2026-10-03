@@ -63,8 +63,9 @@ Ini kasus yang paling mudah terlewat, jadi ditulis eksplisit:
    data lainnya belum ada, jadi **nomor RM belum diterbitkan** dan biodatanya
    belum lengkap.
 2. Pasien datang ke klinik.
-3. Petugas menandai `hadir`, lalu melengkapi data: **tempat & tanggal lahir,
-   kelamin, alamat**.
+3. Pasien datang dan menunjukkan **kartu pasien** berisi nomor RM-nya. Petugas
+   menandai `hadir`, lalu melengkapi data: **tempat & tanggal lahir, kelamin,
+   alamat**.
 4. Begitu data wajibnya lengkap, **nomor RM diterbitkan** — dan di situ juga akun
    pasien bisa ditautkan kalau pasien mau memakai web nanti.
 

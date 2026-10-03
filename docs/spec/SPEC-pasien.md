@@ -110,6 +110,13 @@ kosong, pencocokan pasien praktis tidak bisa dilakukan.
    suara, dan petugas di meja pendaftaran.
 7. Pasien tanpa akun tetap sah. Baris pasien boleh ada tanpa penautan ke akun
    mana pun — itulah bentuk pasien yang datang lewat telepon.
+8. **Kartu pasien adalah bukti identitas di meja pendaftaran.** Saat nomor RM
+   diterbitkan, pasien menerima kartu berisi **nomor RM, nama, dan tanggal lahir**.
+   Kartu itu dibawa setiap kunjungan dan ditunjukkan saat check-in. Kalau kartunya
+   hilang, petugas mencarinya lewat nama + tanggal lahir dan memverifikasi dengan
+   4 digit terakhir nomor HP sebelum memperlakukan orang itu sebagai pasien lama.
+   Petugas **tidak boleh membuat nomor RM baru** sebelum pencarian itu dilakukan —
+   inilah satu-satunya pengaman yang tersisa setelah NIK dihapus.
 
 ## Cara memakai di halaman
 

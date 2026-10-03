@@ -24,6 +24,7 @@ Ukuran keberhasilan:
 | Kolom | Tipe | Catatan |
 |---|---|---|
 | `id` | bigint PK | |
+| `user_id` | FK → `users`, nullable, unik | akun login dokter; boleh kosong untuk dokter yang tidak perlu login |
 | `nama` | string | lengkap dengan gelar, mis. "drg. Sari Wulandari" |
 | `spesialisasi` | string | mis. "Dokter Gigi", "Dokter Umum", "Dokter Anak" |
 | `aktif` | boolean | dokter berhenti praktik **tidak dihapus** — lihat di bawah |
