@@ -23,10 +23,17 @@ Ukuran keberhasilan:
 Benarkan kalau salah:
 
 1. Aplikasi web, bukan aplikasi mobile native.
-2. Pasien **tidak login**. Identitasnya adalah kode booking.
-3. Petugas klinik login (modul `backoffice`).
-4. Satu slot = satu jam. Semua janji dianggap berdurasi sama.
-5. Tidak ada notifikasi eksternal (WhatsApp/email/SMS) — di luar lingkup.
+2. Pasien boleh punya akun (login Google), **tapi akun bukan syarat memegang
+   janji**. Setiap janji selalu punya kode booking; pasien tanpa akun — termasuk
+   yang memesan lewat agen suara — tetap bisa melihat dan mengubah janjinya
+   dengan kode booking + 4 digit terakhir nomor HP.
+3. Petugas dan dokter login dengan email dan password. Dokter punya halaman
+   sendiri dengan lingkup terbatas pada janji miliknya.
+4. Slot memakai **grid tetap per dokter**: durasi slot adalah data di
+   `jadwal_dokters` (nilai awal 30 menit), bukan angka di dalam kode. Dengan grid
+   tetap, kunci unik pada jam mulai sudah cukup untuk mencegah bentrok.
+5. Email hanya dipakai untuk **registrasi akun dan reset password pasien** — bukan
+   untuk pengingat janji. Tidak ada WhatsApp maupun SMS.
 6. Semua waktu memakai zona WITA (UTC+8) dan disimpan sebagai waktu lokal klinik.
 7. Mikrofon hanya diuji lewat `http://localhost` (browser memblokir di alamat non-HTTPS).
 
@@ -41,30 +48,48 @@ Benarkan kalau salah:
 | `dokter_id` | FK → `dokters` | |
 | `tanggal` | date | |
 | `jam` | time | jam mulai, kelipatan slot |
-| `nama_pasien` | string | |
-| `no_hp` | string | dipakai untuk pemulihan kode dan verifikasi ringan |
+| `pasien_id` | FK → `pasiens` | nama pasien diambil dari relasi ini, tidak disalin |
 | `keluhan` | text nullable | |
 | `sumber` | enum | `web`, `chat`, `suara`, `petugas` |
 | `status` | enum | lihat bagian Status |
-| `dibatalkan_pada` | datetime nullable | **bagian dari kunci unik** — lihat di bawah |
+| `dibatalkan_pada` | datetime nullable | hanya keterangan kapan dibatalkan; **bukan** bagian dari kunci unik |
 | `dibuat_pada` / `diubah_pada` | timestamp | |
 
 ### Kunci anti double-booking
 
+Slot yang sedang terisi disimpan di tabel sendiri, `slot_terpesan`
+(`dokter_id`, `tanggal`, `jam` — semuanya `NOT NULL`), dengan kunci unik:
+
 ```
-UNIQUE (dokter_id, tanggal, jam, dibatalkan_pada)
+UNIQUE (dokter_id, tanggal, jam)
 ```
 
-Alasannya penting dan perlu dipahami seluruh tim: di MySQL, `NULL` dianggap
-berbeda satu sama lain di dalam indeks unik. Janji yang masih aktif punya
-`dibatalkan_pada = NULL`, jadi dua janji aktif pada slot yang sama **pasti
-ditolak**. Janji yang sudah dibatalkan punya nilai di kolom itu, jadi ia tidak
-lagi mengunci slotnya — tanpanya, slot yang dibatalkan akan terkunci selamanya
-dan rahasia ini baru ketahuan saat demo.
+**Koreksi rancangan awal.** Sempat dipakai trik `UNIQUE (dokter_id, tanggal, jam,
+dibatalkan_pada)` dengan `dibatalkan_pada` boleh `NULL`, dengan harapan janji yang
+sudah dibatalkan tidak lagi mengunci slotnya. **Trik itu tidak bekerja dan sudah
+dibuktikan gagal.**
 
-Efek sampingnya: saat mengubah jadwal, kita **cukup memperbarui `tanggal` dan
-`jam` pada baris yang sama**. Kalau slot tujuan sudah terisi, MySQL menolak
-perubahan itu secara atomik — tidak ada celah waktu antara "cek" dan "simpan".
+Sebabnya: MySQL mengizinkan banyak nilai `NULL` di dalam indeks unik — `NULL`
+dianggap berbeda satu sama lain. Diuji langsung di MySQL 8.0.30 (2 Okt 2026):
+dua baris dengan `dibatalkan_pada = NULL` pada slot yang sama **diterima tanpa
+error**. Artinya trik ini justru melumpuhkan anti double-booking, bukan
+menyelematkan slot yang dibatalkan. Jangan diulang.
+
+Cara kerjanya sekarang:
+
+- **Buat janji** → `INSERT` ke `slot_terpesan`. Kalau slot itu sudah ada, MySQL
+  menolak dengan error 1062 dan pasien melihat pesan "slot sudah terisi".
+- **Batalkan** → `DELETE` barisnya dari `slot_terpesan`. Slot langsung bisa
+  dipesan lagi, sementara baris janjinya tetap ada di `appointments` beserta
+  seluruh riwayatnya.
+- **Ubah jadwal** → satu transaksi: hapus slot lama, sisipkan slot baru,
+  perbarui baris janji. Kalau slot baru sudah terisi, seluruh transaksi
+  dibatalkan dan tidak ada yang berubah separuh jalan.
+
+Kenapa tetap kunci database, bukan pengecekan di kode: pengecekan di aplikasi
+hanya berlaku kalau **semua** penulis memakainya. Satu jalur yang lupa — form
+web, agen chat, agen suara, seeder, atau impor data — dan janji bentrok bisa
+masuk. Batasan database tidak bisa dilupakan.
 
 ### `riwayat_janji`
 
@@ -209,7 +234,9 @@ jalur istimewa:
 
 | Risiko | Dampak | Pencegahan |
 |---|---|---|
-| Slot terkunci selamanya oleh janji batal | Tinggi | Kunci unik memakai `dibatalkan_pada` yang `NULL`-able |
+| Slot terkunci selamanya oleh janji batal | Tinggi | `slot_terpesan` hanya memuat slot janji aktif; batal = `DELETE` dari tabel itu |
+| Memakai kolom `NULL` untuk selektif menegakkan keunikan | Tinggi | Sudah dibuktikan gagal di MySQL 8.0.30 — jangan diulang |
+| Satu jalur kode lupa memakai `BookingService` | Tinggi | Batasan ditegakkan database lewat `slot_terpesan`, bukan validasi aplikasi |
 | Dua permintaan bersamaan menempati slot sama | Tinggi | Andalkan `UNIQUE` di database, bukan pengecekan di aplikasi |
 | Perbedaan aturan antara form web dan agen AI | Tinggi | Satu `BookingService` untuk semua jalur |
 | Kode booking mudah ditebak | Sedang | Acak dari alfabet tanpa karakter mirip, panjang 8 |

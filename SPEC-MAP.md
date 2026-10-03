@@ -8,16 +8,22 @@ dokumennya dulu, baru kodenya.
 
 | Id modul | Tanggung jawab | Bergantung pada |
 |---|---|---|
-| `dokter` | Data dokter dan jadwal praktiknya (poli, hari, jam mulai–selesai) | — |
+| `dokter` | Data dokter, jadwal praktik, tanggal libur/cuti | — |
 | `janji` | Siklus hidup janji temu: buat, ubah jadwal, batalkan, riwayat perubahan, kode booking | `dokter` |
-| `qr` | Pembuatan QR pada bukti janji dan halaman scan QR di panel petugas | `janji`, `backoffice` |
-| `backoffice` | Login petugas, daftar janji, ubah status, export CSV | `janji` |
+| `pasien` | Biodata pasien (tanpa NIK), nomor rekam medis, penautan ke akun | `akun` |
+| `akun` | Login (Google, cadangan email+password) dan peran: pasien, petugas, dokter. Satu akun boleh menaungi banyak biodata | — |
+| `rekam-medis` | Catatan hasil pemeriksaan per kunjungan. **Tidak pernah ikut export CSV** | `janji`, `akun` |
+| `backoffice` | Daftar janji, ubah status, export CSV, kelola jadwal dokter | `janji`, `akun` |
 | `asisten-ai` | Chat teks dan suara yang memakai layanan `janji` | `dokter`, `janji` |
+| `qr` | Pembuatan QR pada bukti janji dan halaman scan QR di panel petugas | `janji`, `backoffice` |
 
-**Urutan build:** `dokter` → `janji` → (`backoffice`, `asisten-ai`) → `qr`
+**Urutan build:** `dokter` → `janji` → `akun` → (`backoffice`, `rekam-medis`,
+`asisten-ai`) → `qr`
 
-`backoffice` dan `asisten-ai` boleh dikerjakan bersamaan setelah `janji` selesai,
-karena keduanya hanya *memakai* layanan janji dan tidak mengubah aturannya.
+`backoffice`, `rekam-medis`, dan `asisten-ai` boleh dikerjakan bersamaan setelah
+`janji` selesai, karena ketiganya hanya *memakai* layanan janji dan tidak mengubah
+aturannya. Yang tidak boleh dikerjakan bersamaan adalah `janji` dan apa pun yang
+menyentuh tabel `slot_terpesan`.
 
 `qr` ditaruh paling akhir bukan karena tidak penting, tapi karena ia bergantung
 pada dua modul sekaligus (kode dari `janji`, halaman scan di `backoffice`).
